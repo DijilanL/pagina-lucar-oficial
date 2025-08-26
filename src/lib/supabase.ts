@@ -8,4 +8,5 @@ declare global {
   var __sb: SupabaseClient | undefined;
 }
 
-export const supabase = globalThis.__sb ??= createClient(url, anon);
+export const supabase = globalThis.__sb ?? createClient(url, anon);
+if (!globalThis.__sb) globalThis.__sb = supabase;

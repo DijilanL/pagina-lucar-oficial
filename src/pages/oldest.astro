@@ -1,7 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
-// Vite devuelve la URL final del módulo (en dev y en build)
-import oldestClientUrl from "./oldest.client.js?url";
+// 👉 Vite devuelve la URL del bundle final
+import oldestScriptUrl from "../client/oldest.ts?url";
 ---
 <Layout title="Archivos antiguos">
   <section class="max-w-5xl mx-auto">
@@ -9,6 +9,6 @@ import oldestClientUrl from "./oldest.client.js?url";
     <div id="list" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
   </section>
 
-  <!-- Carga el JS del navegador por URL resuelta por Vite -->
-  <script type="module" src={oldestClientUrl}></script>
+  <!-- Carga el JS ya empaquetado -->
+  <script type="module" src={oldestScriptUrl}></script>
 </Layout>
