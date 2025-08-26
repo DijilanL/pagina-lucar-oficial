@@ -1,21 +1,11 @@
-// src/lib/supabase.ts
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const url  = import.meta.env.PUBLIC_SUPABASE_URL;
-const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const url  = import.meta.env.PUBLIC_SUPABASE_URL!;
+const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY!;
 
-if (import.meta.env.DEV && (!url || !anon)) {
-  console.warn("[supabase] Faltan PUBLIC_SUPABASE_URL o PUBLIC_SUPABASE_ANON_KEY");
+declare global {
+  // eslint-disable-next-line no-var
+  var __sb: SupabaseClient | undefined;
 }
 
-// Reutiliza una única instancia en el mismo contexto del navegador
-const g = globalThis as unknown as { __sb?: SupabaseClient };
-
-export const supabase =
-  g.__sb ??= createClient(url!, anon!, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      // storageKey: (por defecto ya usa sb-<projectRef>-auth-token)
-    },
-  });
+export const supabase = globalThis.__sb ??= createClient(url, anon);

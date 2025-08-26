@@ -1,9 +1,8 @@
-import { supabase } from "@/lib/supabase";
+// src/pages/oldest.client.js
+import { supabase } from "../lib/supabase"; // ← IMPORT RELATIVO (no '@/')
 
-function previewHtml(url: string, ct = "") {
-  const iframe = (src: string) =>
-    `<iframe class="w-full h-full border-0" src="${src}" loading="lazy"></iframe>`;
-
+function previewHtml(url, ct = "") {
+  const iframe = (src) => `<iframe class="w-full h-full border-0" src="${src}" loading="lazy"></iframe>`;
   if (ct.startsWith("image/")) {
     return `
       <div class="w-full h-full overflow-auto bg-slate-900 flex items-center justify-center">
@@ -18,7 +17,7 @@ function previewHtml(url: string, ct = "") {
   return iframe(url);
 }
 
-function card(row: any) {
+function card(row) {
   const { data: pub } = supabase.storage.from("uploads").getPublicUrl(row.object_name);
   const url = pub.publicUrl;
   const date = new Date(row.created_at).toLocaleString();
@@ -45,11 +44,11 @@ function card(row: any) {
     </article>`;
 }
 
-async function load(listEl: HTMLElement) {
+async function load(listEl) {
   const { data, error } = await supabase
     .from("files")
     .select("*")
-    .order("created_at", { ascending: true }) // más antiguos primero
+    .order("created_at", { ascending: true })
     .limit(100);
 
   if (error) {
@@ -59,12 +58,12 @@ async function load(listEl: HTMLElement) {
   listEl.innerHTML = (data ?? []).map(card).join("") || "<p>No hay archivos aún.</p>";
 }
 
-function wireDownloads(listEl: HTMLElement) {
+function wireDownloads(listEl) {
   listEl.addEventListener("click", async (e) => {
-    const btn = (e.target as HTMLElement).closest("[data-action='download']") as HTMLButtonElement | null;
+    const btn = e.target.closest("[data-action='download']");
     if (!btn) return;
 
-    const path = btn.getAttribute("data-path")!;
+    const path = btn.getAttribute("data-path");
     const name = btn.getAttribute("data-name") || "archivo";
 
     btn.textContent = "Descargando…";
