@@ -1,22 +1,131 @@
-<!doctype html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
-	</head>
-	<body>
-		<slot />
-	</body>
-</html>
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import StatsBar from "../components/StatsBar.astro";
+import CommandMenu from "../components/CommandMenu.astro";
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>
+interface Props { title?: string; description?: string }
+const { title = "Mi blog personal", description = "Toda la información que puedo guardar" } = Astro.props;
+
+// ↓ Suavizamos el decorado sólo en /add
+const pathname = Astro.url.pathname;
+const isAdd = pathname === "/add";
+const beltFrom = isAdd ? "from-white/5" : "from-white/10";    // light-belt más tenue en /add
+const decoOpacity = isAdd ? "opacity-35" : "opacity-70";       // blobs/anillos más suaves en /add
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0b1220" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+
+  <body class="min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-fuchsia-500/30 selection:text-white">
+    <!-- Progreso de scroll -->
+    <div id="progress" class="fixed top-0 left-0 z-50 h-1 w-0 bg-gradient-to-r from-fuchsia-400 via-indigo-400 to-blue-400"></div>
+
+    <!-- Skip link -->
+    <a href="#content" class="sr-only focus:not-sr-only fixed left-4 top-4 z-50 btn btn-ghost btn-sm">Saltar al contenido</a>
+
+    <!-- Fondo global (se mantiene) -->
+    <div class="pointer-events-none fixed inset-0 -z-10">
+      <div class="absolute inset-0 bg-gradient-to-b from-indigo-900/20 via-slate-950 to-slate-950"></div>
+      <div class="absolute inset-0 bg-[radial-gradient(60%_40%_at_20%_0%,rgba(59,130,246,.18),transparent_60%),radial-gradient(50%_35%_at_80%_-10%,rgba(168,85,247,.18),transparent_55%)]"></div>
+      <div class="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+    </div>
+
+    <Header />
+
+    <!-- Contenido -->
+    <main id="content" class="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-8">
+      <StatsBar />
+      <div class="divider"></div>
+
+      <!-- ▸ ZONA CON BACKDROP INTERNO -->
+      <section class={`relative isolate ring-gradient ${isAdd ? 'ring-soft' : ''}`}>
+        <!-- Light belt (más tenue en /add) -->
+        <div class={`absolute -inset-x-8 -top-10 h-40 rounded-[2rem] bg-gradient-to-b ${beltFrom} to-transparent blur-2xl pointer-events-none -z-10`}></div>
+
+        <!-- Backdrop de contenido (NO intercepta clics) -->
+        <div aria-hidden class="pointer-events-none absolute inset-0 -z-10">
+          <!-- Blobs azul/fucsia -->
+          <div class={`hidden md:block absolute -top-24 -left-24 w-[28rem] h-[28rem] rounded-full blur-3xl bg-[radial-gradient(closest-side,rgba(59,130,246,.22),transparent_65%)] ${decoOpacity}`}></div>
+          <div class={`hidden md:block absolute -bottom-28 -right-24 w-[30rem] h-[30rem] rounded-full blur-3xl bg-[radial-gradient(closest-side,rgba(168,85,247,.22),transparent_65%)] ${decoOpacity}`}></div>
+
+          <!-- Círculo con rayas (el que ya tenías) -->
+          <div class="absolute right-[30%] top-0 w-56 h-56 rotate-12 opacity-55">
+            <div class="w-full h-full rounded-full
+                        bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.12)_0_6px,transparent_6px_14px)]
+                        [mask-image:radial-gradient(circle_closest-side_at_50%_50%,black_64%,transparent_80%)]">
+            </div>
+          </div>
+
+          <!-- ✦ ESTRELLA GRANDE (rayas + misma opacidad) -->
+          <div class={`absolute left-6 md:left-10 top-28 md:top-32 w-64 h-64 md:w-72 md:h-72 opacity-55 ${decoOpacity}`}>
+            <div class="w-full h-full rotate-[8deg]
+                        bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.12)_0_6px,transparent_6px_14px)]
+                        drop-shadow-[0_0_18px_rgba(168,85,247,.12)]
+                        [clip-path:polygon(50%_0%,61%_35%,98%_35%,68%_57%,79%_91%,50%_70%,21%_91%,32%_57%,2%_35%,39%_35%)]">
+            </div>
+          </div>
+
+          <!-- ◆ ROMBO GRANDE (rayas + misma opacidad) -->
+          <div class={`absolute right-6 md:right-12 bottom-10 md:bottom-14 w-64 h-64 md:w-72 md:h-72 opacity-55 ${decoOpacity}`}>
+            <div class="w-full h-full -rotate-[10deg]
+                        bg-[repeating-linear-gradient(135deg,rgba(255,255,255,.12)_0_6px,transparent_6px_14px)]
+                        drop-shadow-[0_0_18px_rgba(59,130,246,.12)]
+                        [clip-path:polygon(50%_0%,100%_50%,50%_100%,0%_50%)]">
+            </div>
+          </div>
+        </div>
+
+        <!-- Contenido real -->
+        <slot />
+      </section>
+    </main>
+
+    <!-- Botón “volver arriba” -->
+    <button id="toTop" class="fixed bottom-6 right-6 btn btn-primary shadow-xl hidden" aria-label="Volver arriba">↑</button>
+
+    <!-- Pie -->
+    <footer class="max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-10 text-sm text-slate-400">
+      Hecho con Astro · Tailwind · Supabase
+    </footer>
+
+    <!-- Menú comando -->
+    <CommandMenu />
+
+    <!-- UX scripts -->
+    <script type="module">
+      const progress = document.getElementById("progress");
+      const toTop = document.getElementById("toTop");
+
+      const onScroll = () => {
+        const y = window.scrollY;
+        const h = document.documentElement.scrollHeight - window.innerHeight;
+        const pct = h > 0 ? (y / h) * 100 : 0;
+        progress.style.width = pct + "%";
+        if (y > 400) toTop.classList.remove("hidden"); else toTop.classList.add("hidden");
+      };
+      addEventListener("scroll", onScroll, { passive: true }); onScroll();
+      toTop?.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+      if ("startViewTransition" in document) {
+        document.addEventListener("click", (e) => {
+          const a = e.target.closest?.("a");
+          if (!a) return;
+          const isInternal = a.origin === location.origin && !a.target && !a.hasAttribute("download");
+          if (!isInternal) return;
+          e.preventDefault();
+          document.startViewTransition(async () => { location.href = a.href; });
+        });
+      }
+    </script>
+  </body>
+</html>

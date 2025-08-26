@@ -1,0 +1,46 @@
+---
+const links = [
+  { label: "Últimos archivos", href: "/latest" },
+  { label: "Archivos antiguos", href: "/oldest" },
+  { label: "Añadir archivos",  href: "/add"    },
+  { label: "Sobre la página",  href: "/about"  },
+];
+---
+<dialog id="cmdk" class="glass p-0 w-[min(38rem,92vw)] rounded-2xl">
+  <div class="border-b border-white/10 px-4 py-3 flex items-center gap-2">
+    <svg width="18" height="18" viewBox="0 0 24 24" class="opacity-70"><path fill="none" stroke="currentColor" stroke-width="2" d="m21 21l-6-6m2-5a7 7 0 1 1-14 0a7 7 0 0 1 14 0"/></svg>
+    <input id="cmdk-input" placeholder="Ir a..." class="input !bg-transparent !border-0 p-0 focus:ring-0" />
+    <kbd class="ml-auto kbd">Esc</kbd>
+  </div>
+  <ul id="cmdk-list" class="max-h-80 overflow-auto p-2">
+    {links.map(l => (
+      <li>
+        <a href={l.href} class="block rounded-lg px-3 py-2 text-slate-200 hover:bg-white/10">{l.label}</a>
+      </li>
+    ))}
+  </ul>
+</dialog>
+
+<script type="module">
+  const dialog = document.getElementById("cmdk");
+  const input  = document.getElementById("cmdk-input");
+  const list   = document.getElementById("cmdk-list");
+
+  const open = () => { dialog.showModal(); input.value=""; input.focus(); filter(""); }
+  const close= () => dialog.close();
+
+  const filter = (q) => {
+    q = q.toLowerCase();
+    [...list.querySelectorAll("li")].forEach(li=>{
+      const ok = li.textContent.toLowerCase().includes(q);
+      li.style.display = ok ? "" : "none";
+    });
+  };
+
+  addEventListener("keydown", (e)=>{
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="k") { e.preventDefault(); open(); }
+    if (e.key==="Escape" && dialog.open) { close(); }
+  });
+  input.addEventListener("input", (e)=> filter(e.target.value));
+  dialog.addEventListener("click", (e)=> { if (e.target === dialog) close(); });
+</script>

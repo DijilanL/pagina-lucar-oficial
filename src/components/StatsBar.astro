@@ -1,0 +1,41 @@
+---
+---
+<div class="glass p-4 md:p-5">
+  <div id="stats" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="space-y-1"><div class="text-xs text-slate-400">Archivos</div><div class="h-6 w-20 bg-white/10 rounded animate-pulse"></div></div>
+    <div class="space-y-1"><div class="text-xs text-slate-400">Tamaño total</div><div class="h-6 w-28 bg-white/10 rounded animate-pulse"></div></div>
+    <div class="space-y-1"><div class="text-xs text-slate-400">Último</div><div class="h-6 w-40 bg-white/10 rounded animate-pulse"></div></div>
+    <div class="space-y-1"><div class="text-xs text-slate-400">Bucket</div><div class="h-6 w-24 bg-white/10 rounded animate-pulse"></div></div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase } from "/src/lib/supabase";
+
+  const el = document.getElementById("stats");
+  const fmtBytes = (n=0) => {
+    const u = ["B","KB","MB","GB","TB"]; let i=0;
+    while (n >= 1024 && i < u.length-1) { n/=1024; i++; }
+    return `${n.toFixed(1)} ${u[i]}`;
+  };
+
+  const { data, error } = await supabase
+    .from("files")
+    .select("size_bytes,created_at")
+    .order("created_at",{ ascending:false });
+
+  if (error) {
+    el.innerHTML = `<div class="text-red-400">Error cargando estadísticas.</div>`;
+  } else {
+    const total = data.length;
+    const bytes = data.reduce((a,b)=> a + (b.size_bytes||0), 0);
+    const last  = data[0]?.created_at ? new Date(data[0].created_at).toLocaleString() : "—";
+
+    el.innerHTML = `
+      <div><div class="text-xs text-slate-400">Archivos</div><div class="text-xl font-semibold">${total}</div></div>
+      <div><div class="text-xs text-slate-400">Tamaño total</div><div class="text-xl font-semibold">${fmtBytes(bytes)}</div></div>
+      <div><div class="text-xs text-slate-400">Último</div><div class="text-xl font-semibold">${last}</div></div>
+      <div><div class="text-xs text-slate-400">Bucket</div><div class="text-xl font-semibold">uploads</div></div>
+    `;
+  }
+</script>
