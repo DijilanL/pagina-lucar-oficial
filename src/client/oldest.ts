@@ -1,10 +1,9 @@
 // src/client/oldest.ts
-import { supabase } from "@/lib/supabase";
+import { supabase } from "../lib/supabase";
 
 function previewHtml(url: string, ct = "") {
   const iframe = (src: string) =>
     `<iframe class="w-full h-full border-0" src="${src}" loading="lazy"></iframe>`;
-
   if (ct.startsWith("image/")) {
     return `
       <div class="w-full h-full overflow-auto bg-slate-900 flex items-center justify-center">
@@ -12,7 +11,6 @@ function previewHtml(url: string, ct = "") {
       </div>`;
   }
   if (ct.includes("pdf")) return iframe(`${url}#view=FitH`);
-
   if (
     ct.includes("wordprocessingml") ||
     ct.includes("msword") ||
@@ -30,9 +28,7 @@ function card(row: any) {
   const { data: pub } = supabase.storage.from("uploads").getPublicUrl(row.object_name);
   const url = pub.publicUrl;
   const date = new Date(row.created_at).toLocaleString();
-  const desc = row.description
-    ? `<p class="mt-3 text-sm text-slate-300">${row.description}</p>`
-    : "";
+  const desc = row.description ? `<p class="mt-3 text-sm text-slate-300">${row.description}</p>` : "";
   const suggestedName = String(row.object_name).replace(/^\d+_/, "");
 
   return `
@@ -88,7 +84,7 @@ function wireDownloads(listEl: HTMLElement) {
     const blobUrl = URL.createObjectURL(data);
     const a = document.createElement("a");
     a.href = blobUrl;
-    a.download = name;
+    a.download = name!;
     document.body.appendChild(a);
     a.click();
     a.remove();
