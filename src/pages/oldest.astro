@@ -7,6 +7,56 @@ import Layout from "../layouts/Layout.astro";
     <div id="list" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
   </section>
 
-  <!-- Vite ve este src, bundlea el TS y reescribe a /_astro/*.js en build -->
-  <script type="module" src="/src/client/oldest.ts"></script>
+  <script type="module">
+    // Ejecuta cuando el DOM está listo
+    document.addEventListener("DOMContentLoaded", () => {
+      /** @type {HTMLElement | null} */
+      const listEl = document.getElementById("list");
+      if (!listEl) return; // ⬅️ guard: evita usar null
+
+      const previewHtml = (url, ct = "") => {
+        const iframe = (src) => `<iframe class="w-full h-full border-0" src="${src}" loading="lazy"></iframe>`;
+        if (!url) return `<div class="p-4 text-sm text-slate-400">Sin vista previa</div>`;
+        if (ct?.startsWith("image/")) {
+          return `
+            <div class="w-full h-full overflow-auto bg-slate-900 flex items-center justify-center">
+              <img src="${url}" alt="" class="max-w-none" loading="lazy" />
+            </div>`;
+        }
+        if (ct?.includes("pdf")) return iframe(`${url}#view=FitH`);
+        if (ct?.includes("wordprocessingml") || ct?.includes("msword") || ct?.includes("officedocument")) {
+          const office = "https://view.officeapps.live.com/op/embed.aspx?src=" + encodeURIComponent(url);
+          return iframe(office);
+        }
+        return iframe(url);
+      };
+
+      const card = (row) => {
+        const url = row.public_url || "";
+        const date = new Date(row.created_at).toLocaleString();
+        const desc = row.description ? `<p class="mt-3 text-sm text-slate-300">${row.description}</p>` : "";
+        const suggestedName = String(row.object_name || "").replace(/^\d+_/, "");
+        return `
+          <article class="p-4 rounded-xl bg-slate-800 hover:bg-slate-750 transition">
+            <div class="font-semibold truncate mb-1">${row.title || "(sin título)"}</div>
+            <div class="text-xs text-slate-400 mb-2">${date}</div>
+            <div class="rounded-lg border border-slate-700 overflow-hidden h-64">
+              ${previewHtml(url, row.content_type || "")}
+            </div>
+            ${desc}
+            <div class="mt-3 flex gap-4 text-sm">
+              ${url ? `<a class="underline text-blue-400" href="${url}" target="_blank" rel="noopener">Abrir</a>` : `<span class="text-slate-500">Abrir</span>`}
+              ${url ? `<a class="underline text-slate-300" href="${url}" download="${suggestedName}">Descargar</a>` : `<span class="text-slate-500">Descargar</span>`}
+            </div>
+          </article>`;
+      };
+
+      (async () => {
+        const res = await fetch("/api/files?order=asc&limit=100");
+        if (!res.ok) { listEl.innerHTML = `<p class="text-red-400">Error al listar</p>`; return; }
+        const data = await res.json();
+        listEl.innerHTML = (data ?? []).map(card).join("") || "<p>No hay archivos aún.</p>";
+      })();
+    });
+  </script>
 </Layout>

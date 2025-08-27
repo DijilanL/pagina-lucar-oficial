@@ -10,32 +10,28 @@
 </div>
 
 <script type="module">
-  import { supabase } from "/src/lib/supabase";
+  document.addEventListener("DOMContentLoaded", () => {
+    /** @type {HTMLElement | null} */
+    const el = document.getElementById("stats");
+    if (!el) return; // ⬅️ guard
 
-  const el = document.getElementById("stats");
-  const fmtBytes = (n=0) => {
-    const u = ["B","KB","MB","GB","TB"]; let i=0;
-    while (n >= 1024 && i < u.length-1) { n/=1024; i++; }
-    return `${n.toFixed(1)} ${u[i]}`;
-  };
+    const fmtBytes = (n = 0) => {
+      const u = ["B","KB","MB","GB","TB"]; let i = 0;
+      while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+      return `${n.toFixed(1)} ${u[i]}`;
+    };
 
-  const { data, error } = await supabase
-    .from("files")
-    .select("size_bytes,created_at")
-    .order("created_at",{ ascending:false });
-
-  if (error) {
-    el.innerHTML = `<div class="text-red-400">Error cargando estadísticas.</div>`;
-  } else {
-    const total = data.length;
-    const bytes = data.reduce((a,b)=> a + (b.size_bytes||0), 0);
-    const last  = data[0]?.created_at ? new Date(data[0].created_at).toLocaleString() : "—";
-
-    el.innerHTML = `
-      <div><div class="text-xs text-slate-400">Archivos</div><div class="text-xl font-semibold">${total}</div></div>
-      <div><div class="text-xs text-slate-400">Tamaño total</div><div class="text-xl font-semibold">${fmtBytes(bytes)}</div></div>
-      <div><div class="text-xs text-slate-400">Último</div><div class="text-xl font-semibold">${last}</div></div>
-      <div><div class="text-xs text-slate-400">Bucket</div><div class="text-xl font-semibold">uploads</div></div>
-    `;
-  }
+    (async () => {
+      const res = await fetch("/api/stats");
+      if (!res.ok) { el.innerHTML = `<div class="text-red-400">Error</div>`; return; }
+      const { total, bytes, last } = await res.json();
+      const lastStr = last ? new Date(last).toLocaleString() : "—";
+      el.innerHTML = `
+        <div class="space-y-1"><div class="text-xs text-slate-400">Archivos</div><div class="text-xl font-semibold">${total}</div></div>
+        <div class="space-y-1"><div class="text-xs text-slate-400">Tamaño total</div><div class="text-xl font-semibold">${fmtBytes(bytes)}</div></div>
+        <div class="space-y-1"><div class="text-xs text-slate-400">Último</div><div class="text-xl font-semibold">${lastStr}</div></div>
+        <div class="space-y-1"><div class="text-xs text-slate-400">Bucket</div><div class="text-xl font-semibold">uploads</div></div>
+      `;
+    })();
+  });
 </script>

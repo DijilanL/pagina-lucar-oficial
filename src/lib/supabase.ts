@@ -1,13 +1,8 @@
-// src/lib/supabase.ts
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
-const url  = import.meta.env.PUBLIC_SUPABASE_URL!;
-const anon = import.meta.env.PUBLIC_SUPABASE_ANON_KEY!;
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __sb: SupabaseClient | undefined;
-}
-
-export const supabase = globalThis.__sb ?? createClient(url, anon);
-if (!globalThis.__sb) globalThis.__sb = supabase;
+// SDK en el servidor (no persiste sesión en serverless)
+export const supabase = createClient(
+  import.meta.env.SUPABASE_URL,
+  import.meta.env.SUPABASE_ANON_KEY,
+  { auth: { persistSession: false } }
+);

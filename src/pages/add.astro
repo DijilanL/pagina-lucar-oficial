@@ -6,21 +6,22 @@ import Layout from "../layouts/Layout.astro";
     <h1 class="text-3xl font-bold mb-4">Añadir archivos</h1>
 
     <div class="card p-5 md:p-6">
-      <form id="upload-form" class="space-y-4">
+      <form action="/api/upload" method="post" enctype="multipart/form-data" class="space-y-4" id="upload-form">
         <div>
-          <label class="label">Título</label>
-          <input id="title" required class="input" placeholder="Ej: Técnicas de Modelamiento — Tarea 1" />
+          <label class="label" for="title">Título</label>
+          <input id="title" name="title" required class="input" placeholder="Ej: Técnicas de Modelamiento — Tarea 1" />
         </div>
 
         <div>
-          <label class="label">Descripción (opcional)</label>
-          <textarea id="desc" class="textarea" placeholder="Breve descripción…"></textarea>
+          <label class="label" for="desc">Descripción (opcional)</label>
+          <textarea id="desc" name="description" class="textarea" placeholder="Breve descripción…"></textarea>
         </div>
 
         <div>
-          <label class="label">Archivo</label>
+          <label class="label" for="file">Archivo</label>
           <input
             id="file"
+            name="file"
             type="file"
             required
             class="input"
@@ -31,105 +32,6 @@ import Layout from "../layouts/Layout.astro";
 
         <button type="submit" class="btn btn-primary">Subir</button>
       </form>
-
-      <div id="status" class="mt-4 text-sm text-slate-300"></div>
     </div>
   </section>
-
-  <script type="module">
-    import { supabase } from "/src/lib/supabase";
-
-    const $ = (id) => document.getElementById(id);
-    const form = $("upload-form");
-    const statusEl = $("status");
-
-    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
-
-    // Normaliza a una key segura: sin tildes, solo [a-z0-9._-], guiones compactos, minúsculas
-    function toSafeBase(name) {
-      return name
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // quita acentos
-        .replace(/[^a-zA-Z0-9._-]+/g, "-")                  // deja solo safe chars
-        .replace(/-+/g, "-")                                // colapsa ---
-        .replace(/^[-_.]+|[-_.]+$/g, "")                    // limpia bordes
-        .toLowerCase() || "file";
-    }
-
-    function toFolderedKey(filename) {
-      const dot = filename.lastIndexOf(".");
-      const base = dot !== -1 ? filename.slice(0, dot) : filename;
-      const ext  = dot !== -1 ? filename.slice(dot + 1).toLowerCase() : "";
-
-      const safeBase = toSafeBase(base);
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const ts = Date.now();
-
-      return ext ? `${y}/${m}/${ts}_${safeBase}.${ext}` : `${y}/${m}/${ts}_${safeBase}`;
-    }
-
-    // MIME de respaldo si el navegador no lo da
-    function guessMime(file) {
-      if (file.type) return file.type;
-      const ext = (file.name.split(".").pop() || "").toLowerCase();
-      const map = {
-        pdf: "application/pdf",
-        txt: "text/plain",
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-        png: "image/png",
-        gif: "image/gif",
-        webp: "image/webp",
-        doc: "application/msword",
-        docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      };
-      return map[ext] || "application/octet-stream";
-    }
-
-    function setStatus(msg, isErr = false) {
-      statusEl.textContent = msg;
-      statusEl.className = "mt-4 text-sm " + (isErr ? "text-red-400" : "text-slate-300");
-      console[isErr ? "error" : "log"](msg);
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const title = $("title").value.trim();
-      const description = $("desc").value.trim();
-      const file = $("file").files?.[0];
-
-      if (!title) return setStatus("Pon un título.", true);
-      if (!file)  return setStatus("Selecciona un archivo.", true);
-      if (file.size > MAX_SIZE) return setStatus("Máximo 10 MB.", true);
-
-      // Key segura para Storage (evita “Invalid key”)
-      const objectName = toFolderedKey(file.name);
-      const contentType = guessMime(file);
-
-      // 1) Subir a Storage
-      setStatus("Subiendo archivo…");
-      const { error: upErr } = await supabase
-        .storage.from("uploads")
-        .upload(objectName, file, { contentType, upsert: false });
-
-      if (upErr) return setStatus("Error subiendo a Storage: " + upErr.message, true);
-
-      // 2) Guardar metadatos
-      setStatus("Guardando metadatos…");
-      const { error: dbErr } = await supabase.from("files").insert({
-        object_name: objectName,
-        title,
-        description,
-        size_bytes: file.size,
-        content_type: contentType,
-      });
-
-      if (dbErr) return setStatus("Error guardando en BD: " + dbErr.message, true);
-
-      // 3) OK → redirigir a /latest destacando el nuevo
-      setStatus("Listo ✅ Redirigiendo…");
-      location.href = `/latest?new=${encodeURIComponent(objectName)}`;
-    });
-  </script>
 </Layout>
